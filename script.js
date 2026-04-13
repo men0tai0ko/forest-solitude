@@ -11,14 +11,14 @@ function resize() {
   canvas.height = window.innerHeight;
   // リサイズ前後のcanvasサイズ差分をoffsetに補正（プレイヤー実座標を維持）
   // 実座標 = canvas.width/2 - offsetX なので、幅が変わった分だけoffsetを調整する
-  // typeof チェックで world 定義前（初回呼び出し時）のReferenceErrorを回避
-  if(typeof world !== "undefined"){
-    world.offsetX += (canvas.width  - prevW) / 2;
-    world.offsetY += (canvas.height - prevH) / 2;
-  }
+  world.offsetX += (canvas.width  - prevW) / 2;
+  world.offsetY += (canvas.height - prevH) / 2;
 }
 window.addEventListener("resize", resize);
-resize();
+// resize() の初回呼び出しは world 定義後に移動（TDZ回避）
+// canvas サイズだけ先に確定させる
+canvas.width  = window.innerWidth;
+canvas.height = window.innerHeight;
 
 // =====================
 // ■ Config
@@ -218,6 +218,7 @@ function calcSpawnOffset() {
 }
 
 const world = calcSpawnOffset(); // 初期スポーン位置
+resize(); // world 定義後の初回呼び出し（canvas補正 + world.offset補正が安全に実行される）
 
 // =====================
 // ■ Enemy
