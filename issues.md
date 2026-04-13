@@ -77,6 +77,10 @@
 - 対応：`move()` でノックバックを入力移動から分離。入力移動のみ `isWall()` チェック対象とし、ノックバックは壁チェック後に独立適用することで干渉を解消
 - 残課題：強いノックバックで壁内に押し込まれる可能性あり（tasks.md に技術負債として記録）
 
+### ~~🟢 ブラウザリサイズ時にプレイヤーのマップ上位置がずれる~~ ✅ 解決済み
+- 症状：ウィンドウサイズ変更時に `canvas.width/height` が変わり、同じ `world.offsetX/Y` でも実座標 `canvas.width/2 - offsetX` が変化してプレイヤー位置がずれる
+- 対応：`resize()` 内でリサイズ前後の `canvas` サイズ差分の半分を `world.offsetX/Y` に加算して実座標を維持。初回呼び出し時（`prevW=0`）は `if(prevW && prevH)` でスキップ
+
 ### ~~🟢 stamina が maxStamina を超えてオーバーフローする~~ ✅ 解決済み
 - 症状：`stamina += STAMINA_RECOVER` の浮動小数点誤差により `maxStamina(100)` を超える値が蓄積される
 - 対応：`update()` の回復処理直後に `if(player.stamina > player.maxStamina) player.stamina = player.maxStamina` を追加

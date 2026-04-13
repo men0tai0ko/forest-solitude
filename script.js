@@ -5,8 +5,16 @@ const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
 function resize() {
-  canvas.width = window.innerWidth;
+  const prevW = canvas.width;
+  const prevH = canvas.height;
+  canvas.width  = window.innerWidth;
   canvas.height = window.innerHeight;
+  // リサイズ前後のcanvasサイズ差分をoffsetに補正（プレイヤー実座標を維持）
+  // 実座標 = canvas.width/2 - offsetX なので、幅が変わった分だけoffsetを調整する
+  if(prevW && prevH){
+    world.offsetX += (canvas.width  - prevW) / 2;
+    world.offsetY += (canvas.height - prevH) / 2;
+  }
 }
 window.addEventListener("resize", resize);
 resize();
