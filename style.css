@@ -1,0 +1,91 @@
+/* =====================
+   全体
+===================== */
+body {
+  margin: 0;
+  overflow: hidden;
+  background: #000;
+  font-family: monospace;
+  touch-action: none;
+}
+
+canvas {
+  display: block;
+}
+
+/* =====================
+   仮想パッド
+===================== */
+#pad {
+  position: fixed;
+  bottom: 10px;
+  left: 10px;
+  right: 10px;
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+/* D-Pad */
+.dpad {
+  pointer-events: auto;
+}
+
+.dpad button {
+  display: block;
+  width: 60px;
+  height: 60px;
+  margin: 4px;
+  font-size: 20px;
+}
+
+/* 十字配置 */
+.dpad > div {
+  display: flex;
+}
+
+/* アクションボタン */
+.actions {
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.actions button {
+  width: 70px;
+  height: 70px;
+  margin: 6px;
+  font-size: 22px;
+}
+
+/* =====================
+   ボタン共通
+===================== */
+button {
+  background: rgba(255,255,255,0.1);
+  color: white;
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 10px;
+  backdrop-filter: blur(4px);
+}
+
+/* 押した時 */
+button:active {
+  background: rgba(255,255,255,0.3);
+}
+
+/* =====================
+   スマホ最適化
+===================== */
+@media (max-width: 768px) {
+  .dpad button {
+    width: 55px;
+    height: 55px;
+  }
+
+  .actions button {
+    width: 65px;
+    height: 65px;
+  }
+}
