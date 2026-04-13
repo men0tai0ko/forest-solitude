@@ -17,37 +17,36 @@
 
 ## ■ クリティカル
 
-### ~~🔴 仮想パッドが機能しない~~ ✅ 解決済み
-- 対応：`script.js` 末尾に `bindPad()` を追加し、touchstart/touchend/touchcancel を全ボタンにバインド
+### 🔴 仮想パッドが機能しない
+- 症状：スマホで操作できない
+- 原因：`script.js` にタッチイベントのバインドが存在しない
+- 対象：`script.js`（タッチイベント追加）、`index.html`（ボタンID確認）
+- 影響：スマホ対応を謳っているが実質PC専用
 
-### ~~🔴 死亡処理が毎フレーム多重実行される~~ ✅ 解決済み
-- 対応：`handleDeath` 先頭で `player.hp=1` にセットし、次フレームの `hp<=0` 判定をブロック
+### 🔴 死亡処理が毎フレーム多重実行される
+- 症状：`player.hp <= 0` の間、`handleDeath()` が毎フレーム呼ばれ続ける
+- 原因：`update()` の先頭で `hp <= 0` チェック後に `handleDeath()` を呼び `return` するが、`handleDeath` 内で `player.hp = 100` にするまでの間に複数フレーム処理が走る可能性あり。また `hp` が回復前に次フレームで再呼出しされる構造
+- 対象：`script.js` の `update()` / `handleDeath()`
 
-### ~~🔴 ロード後に前セッションの敵・弾が残存する~~ ✅ 解決済み
-- 対応：`loadGame` 末尾で `enemies` を初期値にリセット、`bullets`/`deathDrops` を空配列で上書き
+### 🔴 ロード後に前セッションの敵・弾が残存する
+- 症状：`loadGame()` 実行後、前ゲームの `enemies`/`bullets`/`deathDrops` がリセットされない
+- 原因：`loadGame` は `player`/`world`/`inventory`/`map` のみ復元。配列3種は上書きなし
+- 対象：`script.js` の `loadGame()`
 
 ---
 
 ## ■ 重大
 
-### 🟡 攻撃・回避でスタミナが消費されない
-- 症状：Space（攻撃）・Shift（回避）を連打してもスタミナが減らない
-- 原因：`attack()` にスタミナ消費処理なし。dodge入力はフラグセットのみで実処理・消費処理が未実装
-- 対象：`script.js` の `attack()`・dodge入力処理
-- 補足：`STAMINA_ATTACK_COST=15` / `STAMINA_DODGE_COST=30` は定数定義済みだが未使用
+### ~~🟡 攻撃・回避でスタミナが消費されない~~ ✅ 解決済み
+- 対応：`attack()` 先頭にスタミナ不足ガードと消費処理を追加。`keydown` の ShiftLeft にスタミナ消費と `playSE("dodge")` を追加
 
-### 🟡 dodge SEが再生されない
-- 症状：回避操作時に効果音が鳴らない
-- 原因：`playSE("dodge")` の呼び出し箇所が `script.js` に存在しない（SE定義はあり）
-- 対象：`script.js`（dodge処理に `playSE("dodge")` の追加が必要）
+### ~~🟡 dodge SEが再生されない~~ ✅ 解決済み
+- 対応：`keydown` の ShiftLeft 処理内に `playSE("dodge")` を追加（スタミナ足りる場合のみ再生）
 
 
 
-### 🟡 弾がプレイヤーにダメージを与えない
-- 症状：shooterの弾に当たってもHPが減らない
-- 原因：`updateBullets()` は弾の移動のみ。プレイヤーとの衝突判定・ダメージ処理が未実装
-- 対象：`script.js` の `updateBullets()`
-- 補足：`balance.md` に弾ダメージ5と記載があるが処理なし
+### ~~🟡 弾がプレイヤーにダメージを与えない~~ ✅ 解決済み
+- 対応：`updateBullets()` 内に距離判定（半径16px）を追加し、命中時にダメージ5・shake・hit SEを付与。命中弾は `dead` フラグで同フレーム内に除去
 
 ### 🟡 壁を通り抜けられる
 - 症状：壁タイルに侵入できる
@@ -63,6 +62,13 @@
 - 症状：死亡地点のアイテムが拾えない
 - 原因：`deathDrops` の生成処理は存在するが、プレイヤーとの接触判定・回収処理が未実装
 - 対象：`script.js`（回収処理の追加）
+
+---
+
+### 🟢 小屋内でも弾ダメージを受ける
+- 症状：`player.inHut=true` の状態で shooter の弾が命中するとダメージを受ける
+- 原因：`updateBullets()` の衝突判定に `player.inHut` チェックがない
+- 対象：`script.js` の `updateBullets()`
 
 ---
 
