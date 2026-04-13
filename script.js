@@ -352,16 +352,25 @@ function move(){
   // 入力移動のみ isWall チェック対象とし、ノックバックは壁チェック後に無条件適用
   const moveX = vx * speed;
   const moveY = vy * speed;
+  const R = 10; // キャラクター当たり半径（px）
 
-  // X軸：入力移動を壁チェック、通れる場合のみ適用
+  // X軸：中心＋移動方向の端点を壁チェック
   const nextOffX = world.offsetX - moveX;
-  if(!isWall(canvas.width/2 - nextOffX, canvas.height/2 - world.offsetY)){
+  const nxC = canvas.width/2  - nextOffX;          // 中心X
+  const nyCur = canvas.height/2 - world.offsetY;    // 現在のY（変化なし）
+  if(!isWall(nxC + R*Math.sign(moveX), nyCur) &&
+     !isWall(nxC + R*Math.sign(moveX), nyCur - R) &&
+     !isWall(nxC + R*Math.sign(moveX), nyCur + R)){
     world.offsetX = nextOffX;
   }
 
-  // Y軸：入力移動を壁チェック、通れる場合のみ適用
+  // Y軸：中心＋移動方向の端点を壁チェック
   const nextOffY = world.offsetY - moveY;
-  if(!isWall(canvas.width/2 - world.offsetX, canvas.height/2 - nextOffY)){
+  const nxCur = canvas.width/2  - world.offsetX;    // 現在のX（変化なし）
+  const nyC = canvas.height/2 - nextOffY;           // 中心Y
+  if(!isWall(nxCur,       nyC + R*Math.sign(moveY)) &&
+     !isWall(nxCur - R,   nyC + R*Math.sign(moveY)) &&
+     !isWall(nxCur + R,   nyC + R*Math.sign(moveY))){
     world.offsetY = nextOffY;
   }
 
@@ -536,7 +545,7 @@ function drawMap(){
   map.forEach((row,y)=>{
     row.forEach((v,x)=>{
       const sx=x*TILE_SIZE+world.offsetX;
-      const sy=y*TILE_SIZE+world.offsetY+TILE_SIZE; // fillTextはベースライン基準→タイル上端に揃える
+      const sy=y*TILE_SIZE+world.offsetY+20; // fillTextはベースライン基準：フォントサイズ分オフセット
       ctx.fillStyle=v===1?"#888":v===2?"#0ff":"#0f0";
       ctx.fillText(v===1?"#":v===2?"H":".",sx,sy);
     });
@@ -546,20 +555,20 @@ function drawMap(){
 function drawDeathDrops(){
   ctx.fillStyle="#fa0";
   deathDrops.forEach(d=>{
-    ctx.fillText("D", d.x + world.offsetX, d.y + world.offsetY + TILE_SIZE);
+    ctx.fillText("D", d.x + world.offsetX, d.y + world.offsetY + 20);
   });
 }
 
 function drawEnemies(){
   ctx.fillStyle="red";
   enemies.forEach(e=>{
-    ctx.fillText("E", e.x+world.offsetX, e.y+world.offsetY+TILE_SIZE);
+    ctx.fillText("E", e.x+world.offsetX, e.y+world.offsetY+20);
   });
 }
 
 function drawPlayer(){
   ctx.fillStyle="cyan";
-  ctx.fillText("@", canvas.width/2, canvas.height/2+TILE_SIZE);
+  ctx.fillText("@", canvas.width/2, canvas.height/2+20);
 }
 
 function drawUI(){
