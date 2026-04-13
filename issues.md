@@ -28,11 +28,9 @@
 ### ~~🔴 回避に無敵・SE・スタミナ消費が未実装~~ ✅ 解決済み
 - 対応：ShiftLeft keydown にスタミナ消費・`player.invincible=30`・`playSE("dodge")` を追加。`update()` に無敵カウントダウン、`updateEnemies()` に `invincible===0` ガードを追加
 
-### 🔴 仮想パッドが機能しない
+### ~~🔴 仮想パッドが機能しない~~ ✅ 解決済み
 - 症状：スマホで操作できない
-- 原因：`script.js` にタッチイベントのバインドが存在しない
-- 対象：`script.js`（タッチイベント追加）、`index.html`（ボタンID確認）
-- 影響：スマホ対応を謳っているが実質PC専用
+- 対応：`script.js` に IIFE `bindVpad()` を追加。`up/down/left/right` は `touchstart`/`touchend`/`touchcancel` で `input` フラグを操作。`atk` は `touchstart` で `attack()` 直接呼び出し。`dodge` は `touchstart` でスタミナ判定付きの回避処理を実行
 
 ### ~~🔴 死亡処理が毎フレーム多重実行される~~ ✅ 解決済み
 - 症状：`player.hp <= 0` の間、`handleDeath()` が毎フレーム呼ばれ続ける
@@ -66,16 +64,23 @@
 - 症状：回避中もダメージを受ける
 - 対応：ShiftLeft `keydown` で `player.invincible=30` を付与。`updateEnemies()` に `invincible===0` ガードを追加済み
 
-### 🟡 deathDrop を回収できない
+### ~~🟡 deathDrop を回収できない~~ ✅ 解決済み
 - 症状：死亡地点のアイテムが拾えない
-- 原因：`deathDrops` の生成処理は存在するが、プレイヤーとの接触判定・回収処理が未実装
-- 対象：`script.js`（回収処理の追加）
+- 対応：`update()` 末尾に近接判定（30px未満）と `inventory.wood` 加算・配列除去処理を追加
 
 ---
 
 ## ■ 軽微
 
-### 🟢 ノックバック位置ズレ（まれに発生）
+### ~~🟢 ノックバック位置ズレ（まれに発生）~~ ✅ 解決済み
 - 症状：ノックバック時にプレイヤーが想定外の方向に移動することがある
-- 原因：knockbackX/Y の初期化タイミング不明確。要調査
-- 対象：`script.js` の `move()`
+- 対応：`move()` でノックバックを入力移動から分離。入力移動のみ `isWall()` チェック対象とし、ノックバックは壁チェック後に独立適用することで干渉を解消
+- 残課題：強いノックバックで壁内に押し込まれる可能性あり（tasks.md に技術負債として記録）
+
+### ~~🟢 stamina が maxStamina を超えてオーバーフローする~~ ✅ 解決済み
+- 症状：`stamina += STAMINA_RECOVER` の浮動小数点誤差により `maxStamina(100)` を超える値が蓄積される
+- 対応：`update()` の回復処理直後に `if(player.stamina > player.maxStamina) player.stamina = player.maxStamina` を追加
+
+### ~~🟢 attack() / updateEnemies() でゼロ除算が発生しうる~~ ✅ 解決済み
+- 症状：プレイヤーと敵の座標が完全一致した際に `dist=0` となり `dx/dist` が `NaN` になる。attack() では攻撃判定破損、updateEnemies() では slime 座標が NaN に破損する
+- 対応：両関数の `dist` 算出直後に `if(dist===0) return;` ガードを追加

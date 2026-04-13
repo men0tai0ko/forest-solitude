@@ -310,6 +310,7 @@ function update(){
   updateBullets();
 
   if(player.stamina<player.maxStamina) player.stamina+=STAMINA_RECOVER;
+  if(player.stamina>player.maxStamina) player.stamina=player.maxStamina; // 浮動小数点超過クランプ
 
   if(player.inHut) player.hp+=HUT_HEAL_RATE;
 
@@ -403,6 +404,7 @@ function attack(){
     const dx=(e.x+world.offsetX)-(canvas.width/2);
     const dy=(e.y+world.offsetY)-(canvas.height/2);
     const dist=Math.hypot(dx,dy);
+    if(dist===0) return; // 座標完全一致時のゼロ除算ガード
 
     const dot=(-dx/dist)*player.dirX+(-dy/dist)*player.dirY;
 
@@ -421,6 +423,7 @@ function updateEnemies(){
     const dx=(canvas.width/2)-(e.x+world.offsetX);
     const dy=(canvas.height/2)-(e.y+world.offsetY);
     const dist=Math.hypot(dx,dy);
+    if(dist===0) return; // 座標完全一致時のゼロ除算ガード
 
     if(e.type==="slime"){
       e.x+=dx/dist;
