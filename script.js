@@ -22,6 +22,10 @@ const STAMINA_RECOVER = 0.2;
 
 const HUT_HEAL_RATE = 0.2;
 
+// 小屋スポーンタイル座標（リボーン・初期配置の共通定義）
+const HUT_SPAWN_TX = 1;
+const HUT_SPAWN_TY = 1;
+
 // =====================
 // ■ State
 // =====================
@@ -85,12 +89,28 @@ document.addEventListener("keyup", e => {
 // =====================
 // ■ Map（1=壁 0=床 2=小屋）
 // =====================
+// 旧マップから変更：
+// - 小屋（2）は左上 2×2 タイルを維持（既存仕様と同一）
+// - フィールドを小屋面積（4タイル）の約5倍（≒20タイル）に拡張
+// - マップ全体サイズ：20列×15行
+// - 外周はすべて壁（1）
+// - 小屋エリア（行1-3, 列1-3）と広いフィールド（行1-13, 列3-18）を壁で区画
 const map = [
-[1,1,1,1,1,1,1,1,1,1],
-[1,2,2,0,0,0,0,0,0,1],
-[1,2,2,1,0,0,1,0,0,1],
-[1,0,0,0,0,0,0,0,0,1],
-[1,1,1,1,1,1,1,1,1,1]
+  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+  [1,2,2,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+  [1,2,2,1,0,0,1,0,0,1,0,0,0,0,1,0,0,0,0,1],
+  [1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+  [1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,1],
+  [1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1],
+  [1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+  [1,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,1],
+  [1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1],
+  [1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1],
+  [1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,1],
+  [1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1],
+  [1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,1],
+  [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
 ];
 
 function isWall(x,y){
@@ -124,21 +144,32 @@ const player={
 // ■ World
 // =====================
 // プレイヤー実座標 = canvas.width/2 - offsetX
-// タイル(1,1)中央 = TILE_SIZE*1 + TILE_SIZE/2 = 60px に配置
-// → offsetX = canvas.width/2 - 60
-const world={
-  offsetX: canvas.width/2  - (TILE_SIZE*1 + TILE_SIZE/2),
-  offsetY: canvas.height/2 - (TILE_SIZE*1 + TILE_SIZE/2)
-};
+// スポーンタイル中央 = HUT_SPAWN_TX * TILE_SIZE + TILE_SIZE/2
+// → offsetX = canvas.width/2 - スポーン中央座標
+function calcSpawnOffset() {
+  return {
+    offsetX: canvas.width/2  - (HUT_SPAWN_TX * TILE_SIZE + TILE_SIZE / 2),
+    offsetY: canvas.height/2 - (HUT_SPAWN_TY * TILE_SIZE + TILE_SIZE / 2),
+  };
+}
+
+const world = calcSpawnOffset(); // 初期スポーン位置
 
 // =====================
 // ■ Enemy
 // =====================
+// 敵はすべてフィールド（小屋外の床タイル）に配置
+// ワールド座標 = タイル座標 * TILE_SIZE + TILE_SIZE/2 （タイル中央）
 let enemies=[
-  {x:120,y:80,hp:30,type:"slime"},
-  {x:200,y:100,hp:40,type:"charger"},
-  {x:180,y:60,hp:20,type:"shooter"},
-  {x:300,y:120,hp:200,type:"boss"}
+  {x:5*TILE_SIZE+20,  y:5*TILE_SIZE+20,  hp:30,  type:"slime"},
+  {x:9*TILE_SIZE+20,  y:4*TILE_SIZE+20,  hp:30,  type:"slime"},
+  {x:13*TILE_SIZE+20, y:7*TILE_SIZE+20,  hp:30,  type:"slime"},
+  {x:7*TILE_SIZE+20,  y:10*TILE_SIZE+20, hp:30,  type:"slime"},
+  {x:15*TILE_SIZE+20, y:5*TILE_SIZE+20,  hp:40,  type:"charger"},
+  {x:11*TILE_SIZE+20, y:9*TILE_SIZE+20,  hp:40,  type:"charger"},
+  {x:6*TILE_SIZE+20,  y:8*TILE_SIZE+20,  hp:20,  type:"shooter"},
+  {x:16*TILE_SIZE+20, y:11*TILE_SIZE+20, hp:20,  type:"shooter"},
+  {x:17*TILE_SIZE+20, y:3*TILE_SIZE+20,  hp:200, type:"boss"},
 ];
 
 let bullets=[];
@@ -326,6 +357,11 @@ function handleDeath(){
   });
 
   inventory.wood=Math.floor(inventory.wood/2);
+
+  // 小屋スポーン位置に強制帰還
+  const spawn = calcSpawnOffset();
+  world.offsetX = spawn.offsetX;
+  world.offsetY = spawn.offsetY;
 
   player.hp=100;
 }

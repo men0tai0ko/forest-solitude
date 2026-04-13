@@ -42,7 +42,7 @@ requestAnimationFrame → loop()
 {
   hp, stamina, maxStamina, atk,
   dirX, dirY,          // 向き（正規化ベクトル）
-  invincible,          // 無敵フレーム数（※現在未使用）
+  invincible,          // 無敵フレーム数
   knockbackX, knockbackY,
   healing,             // berry回復残フレーム
   inHut                // 小屋内フラグ
@@ -52,12 +52,12 @@ requestAnimationFrame → loop()
 ### world
 ```js
 { offsetX, offsetY }   // プレイヤー中央固定のためのワールドオフセット
-// 初期値：canvas.width/2 - TILE_SIZE*1.5 でタイル(1,1)中央にスタート
+// 初期値：calcSpawnOffset() で HUT_SPAWN_TX/TY タイル中央に配置
 ```
 
 ### map
 ```js
-// 2D配列。値：0=床 / 1=壁 / 2=小屋
+// 2D配列（20列×15行）。値：0=床 / 1=壁 / 2=小屋
 // プレイヤー座標は canvas.width/2 - world.offsetX で算出
 ```
 
@@ -65,6 +65,8 @@ requestAnimationFrame → loop()
 ```js
 // 配列。{ x, y, hp, type }
 // type: "slime" | "shooter" | "charger" | "boss"
+// 全敵はフィールド（小屋外の床タイル）上に配置
+// 座標はタイル座標ベース：tx * TILE_SIZE + 20（タイル中央近似）
 ```
 
 ### bullets
@@ -91,6 +93,26 @@ requestAnimationFrame → loop()
 - 実際のプレイヤー位置 = `(canvas.width/2 - world.offsetX, canvas.height/2 - world.offsetY)`
 - 移動時は `world.offset` を変更することでワールドをスクロール
 - 敵・マップの描画は `x + world.offsetX` で画面座標に変換
+
+---
+
+## ■ スポーン座標
+
+```js
+// 定数
+const HUT_SPAWN_TX = 1;  // スポーンタイルX（小屋左上）
+const HUT_SPAWN_TY = 1;  // スポーンタイルY
+
+// 計算関数（初期化・リボーン両方で使用）
+function calcSpawnOffset() {
+  return {
+    offsetX: canvas.width/2  - (HUT_SPAWN_TX * TILE_SIZE + TILE_SIZE / 2),
+    offsetY: canvas.height/2 - (HUT_SPAWN_TY * TILE_SIZE + TILE_SIZE / 2),
+  };
+}
+```
+
+- `world` 初期値と `handleDeath()` のリボーン処理が共通してこの関数を使用
 
 ---
 
@@ -127,7 +149,7 @@ requestAnimationFrame → loop()
 |---|---|
 | Arrow | 移動 |
 | Space | attack() |
-| Shift | dodge（input.dodge フラグのみ、実処理は未実装） |
+| Shift | dodge（スタミナ消費・無敵フレーム付与・SE再生） |
 | Z | useHeal() |
 | C（小屋内） | craftHeal() |
 | X（小屋内） | craftWeapon() |
@@ -153,6 +175,8 @@ requestAnimationFrame → loop()
 ```
 
 保存先：`localStorage["forest_survival_save_v1"]`
+
+> **注意：** マップ定義変更後の旧セーブをロードした場合、旧マップが復元される。旧セーブが存在する場合は手動削除が必要。
 
 ---
 
@@ -190,4 +214,4 @@ requestAnimationFrame → loop()
 
 - グローバル変数を多用しているため、関数間の依存に注意
 - `script.js` は単一ファイルのため、規模拡大時はモジュール分割を検討
-- `player.invincible` は定義されているが使用箇所なし（未実装）
+- スポーン座標は `HUT_SPAWN_TX/TY` と `calcSpawnOffset()` で一元管理。`world` 初期値と `handleDeath()` の両方でこれを参照する
