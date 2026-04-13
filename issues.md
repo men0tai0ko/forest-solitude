@@ -37,38 +37,33 @@
 
 ## ■ 重大
 
-### ~~🟡 攻撃・回避でスタミナが消費されない~~ ✅ 解決済み
-- 対応：`attack()` 先頭にスタミナ不足ガードと消費処理を追加。`keydown` の ShiftLeft にスタミナ消費と `playSE("dodge")` を追加
+### 🟡 攻撃・回避でスタミナが消費されない
+- 症状：Space（攻撃）・Shift（回避）を連打してもスタミナが減らない
+- 原因：`attack()` にスタミナ消費処理なし。dodge入力はフラグセットのみで実処理・消費処理が未実装
+- 対象：`script.js` の `attack()`・dodge入力処理
+- 補足：`STAMINA_ATTACK_COST=15` / `STAMINA_DODGE_COST=30` は定数定義済みだが未使用
 
-### ~~🟡 dodge SEが再生されない~~ ✅ 解決済み
-- 対応：`keydown` の ShiftLeft 処理内に `playSE("dodge")` を追加（スタミナ足りる場合のみ再生）
+### 🟡 dodge SEが再生されない
+- 症状：回避操作時に効果音が鳴らない
+- 原因：`playSE("dodge")` の呼び出し箇所が `script.js` に存在しない（SE定義はあり）
+- 対象：`script.js`（dodge処理に `playSE("dodge")` の追加が必要）
 
 
 
-### ~~🟡 弾がプレイヤーにダメージを与えない~~ ✅ 解決済み
-- 対応：`updateBullets()` 内に距離判定（半径16px）を追加し、命中時にダメージ5・shake・hit SEを付与。命中弾は `dead` フラグで同フレーム内に除去
-
-### 🟡 壁を通り抜けられる
-- 症状：壁タイルに侵入できる
-- 原因：`isWall()` は定義済みだが `move()` 内で呼ばれていない
-- 対象：`script.js` の `move()`
-
-### 🟡 回避に無敵フレームがない
-- 症状：回避中もダメージを受ける
-- 原因：`player.invincible` は定義されているが、dodge 処理内で値を設定していない。また `updateEnemies()` で無敵チェックをしていない
-- 対象：`script.js` の dodge 処理・`updateEnemies()`
-
-### 🟡 deathDrop を回収できない
-- 症状：死亡地点のアイテムが拾えない
-- 原因：`deathDrops` の生成処理は存在するが、プレイヤーとの接触判定・回収処理が未実装
-- 対象：`script.js`（回収処理の追加）
-
----
-
-### 🟢 小屋内でも弾ダメージを受ける
-- 症状：`player.inHut=true` の状態で shooter の弾が命中するとダメージを受ける
-- 原因：`updateBullets()` の衝突判定に `player.inHut` チェックがない
+### 🟡 弾がプレイヤーにダメージを与えない
+- 症状：shooterの弾に当たってもHPが減らない
+- 原因：`updateBullets()` は弾の移動のみ。プレイヤーとの衝突判定・ダメージ処理が未実装
 - 対象：`script.js` の `updateBullets()`
+- 補足：`balance.md` に弾ダメージ5と記載があるが処理なし
+
+### ~~🟡 壁を通り抜けられる~~ ✅ 解決済み
+- 対応：`move()` 内でX軸・Y軸それぞれの移動後座標を `isWall()` で事前チェックし、壁の場合はoffset更新をスキップ
+
+### ~~🟡 回避に無敵フレームがない~~ ✅ 解決済み
+- 対応：ShiftLeft keydown で `player.invincible=30` をセット。`update()` 内でカウントダウン。`updateEnemies()` の接触ダメージに `player.invincible===0` ガードを追加
+
+### ~~🟡 deathDrop を回収できない~~ ✅ 解決済み
+- 対応：`update()` 内に距離30px以内の接触でwood回収＋deathDrops除去処理を追加。`drawEnemies()` 内に黄色 `D` 記号での描画を追加
 
 ---
 
