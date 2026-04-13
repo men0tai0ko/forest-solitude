@@ -32,6 +32,7 @@ const HUT_SPAWN_TY = 1;
 let gameStarted = false;
 let hasSave = false;
 let shake = 0;
+let isDead = false; // 死亡処理多重実行防止フラグ
 
 const SAVE_KEY = "forest_survival_save_v1";
 
@@ -231,6 +232,8 @@ function loadGame(){
   Object.assign(player,d.player);
   Object.assign(world,d.world);
   Object.assign(inventory,d.inventory);
+  // 前セッションの残存データをリセット
+  enemies=[]; bullets=[]; deathDrops=[];
 }
 
 function checkSave(){
@@ -243,7 +246,8 @@ checkSave();
 // =====================
 function update(){
 
-  if(player.hp<=0){ handleDeath(); return; }
+  if(player.hp<=0 && !isDead){ isDead=true; handleDeath(); return; }
+  if(isDead) return;
 
   move();
   updateEnemies();
@@ -280,8 +284,19 @@ function move(){
 
   const speed=3;
 
-  world.offsetX-=vx*speed-player.knockbackX;
-  world.offsetY-=vy*speed-player.knockbackY;
+  // X軸移動：壁でなければ適用
+  const nextOffX = world.offsetX - (vx*speed - player.knockbackX);
+  const pxNext = canvas.width/2 - nextOffX;
+  if(!isWall(pxNext, canvas.height/2 - world.offsetY)){
+    world.offsetX = nextOffX;
+  }
+
+  // Y軸移動：壁でなければ適用
+  const nextOffY = world.offsetY - (vy*speed - player.knockbackY);
+  const pyNext = canvas.height/2 - nextOffY;
+  if(!isWall(canvas.width/2 - world.offsetX, pyNext)){
+    world.offsetY = nextOffY;
+  }
 
   const px=canvas.width/2-world.offsetX;
   const py=canvas.height/2-world.offsetY;
@@ -293,6 +308,8 @@ function move(){
 }
 
 function attack(){
+  if(player.stamina < STAMINA_ATTACK_COST) return; // スタミナ不足時は攻撃不可
+  player.stamina -= STAMINA_ATTACK_COST;            // スタミナ消費
   playSE("attack");
 
   enemies.forEach(e=>{
@@ -338,10 +355,21 @@ function updateEnemies(){
 }
 
 function updateBullets(){
+  const cx=canvas.width/2;
+  const cy=canvas.height/2;
   bullets.forEach(b=>{
     b.x+=b.vx;
     b.y+=b.vy;
+    // 弾→プレイヤー衝突判定（無敵中はダメージ無効）
+    const dist=Math.hypot((b.x+world.offsetX)-cx,(b.y+world.offsetY)-cy);
+    if(dist<20 && player.invincible===0){
+      player.hp-=5;
+      shake=10;
+      playSE("hit");
+      b.hit=true; // 命中フラグ
+    }
   });
+  bullets=bullets.filter(b=>!b.hit); // 命中した弾を除去
 }
 
 // =====================
@@ -364,6 +392,7 @@ function handleDeath(){
   world.offsetY = spawn.offsetY;
 
   player.hp=100;
+  isDead=false; // フラグリセット：次フレームから通常更新を再開
 }
 
 // =====================
