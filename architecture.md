@@ -170,7 +170,8 @@ function calcSpawnOffset() {
   "player": { ... },
   "world":  { "offsetX": 0, "offsetY": 0 },
   "inventory": { "wood": 0, "berry": 0 },
-  "map": [ [...], ... ]
+  "map": [ [...], ... ],
+  "settings": { "sound": true }
 }
 ```
 

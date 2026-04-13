@@ -33,6 +33,9 @@ let gameStarted = false;
 let hasSave = false;
 let shake = 0;
 let isDead = false; // 死亡処理多重実行防止フラグ
+let saveFlash = 0;  // "SAVED" 表示カウンタ（saveGame時にセット）
+let hutFlash  = 0;  // フィードバック表示カウンタ（expandHut・クラフト失敗時にセット）
+let hutFlashMsg = ""; // hutFlash で表示するメッセージ
 
 const SAVE_KEY = "forest_survival_save_v1";
 
@@ -273,8 +276,9 @@ function playSE(type){
 // =====================
 function saveGame(){
   localStorage.setItem(SAVE_KEY,JSON.stringify({
-    player,world,inventory,map
+    player,world,inventory,map,settings // settings をセーブ対象に追加
   }));
+  saveFlash = 180; // 約3秒間 "SAVED" を表示
 }
 
 function loadGame(){
@@ -283,6 +287,7 @@ function loadGame(){
   Object.assign(player,d.player);
   Object.assign(world,d.world);
   Object.assign(inventory,d.inventory);
+  if(d.settings) Object.assign(settings,d.settings); // settings を復元（旧セーブ互換：存在チェックあり）
   // 前セッションの残存データをリセット
   enemies=[]; bullets=[]; deathDrops=[];
 }
@@ -318,6 +323,8 @@ function update(){
   if(player.invincible>0) player.invincible--;  // 無敵フレームカウントダウン
 
   if(shake>0) shake--;
+  if(saveFlash>0) saveFlash--; // "SAVED" 表示カウントダウン
+  if(hutFlash>0)  hutFlash--;  // フィードバック表示カウントダウン
 
   // deathDrop 回収判定（balance.md：回収判定距離 30px）
   if(deathDrops.length > 0){
@@ -489,6 +496,8 @@ function craftHeal(){
   if(inventory.wood>=3){
     inventory.wood-=3;
     inventory.berry++;
+  } else {
+    hutFlash=120; hutFlashMsg="NO WOOD"; // 素材不足フィードバック（約2秒）
   }
 }
 
@@ -496,6 +505,8 @@ function craftWeapon(){
   if(inventory.wood>=5){
     inventory.wood-=5;
     player.atk+=5;
+  } else {
+    hutFlash=120; hutFlashMsg="NO WOOD"; // 素材不足フィードバック（約2秒）
   }
 }
 
@@ -511,6 +522,7 @@ function expandHut(){
       }
     });
   });
+  hutFlash=120; hutFlashMsg="EXPANDED"; // 拡張完了フィードバック（約2秒）
 }
 
 function useHeal(){
@@ -578,16 +590,35 @@ function drawUI(){
   ctx.fillText("HP:"+Math.floor(player.hp),20,20);
   ctx.fillText("WOOD:"+inventory.wood,20,40);
   ctx.fillText("ATK:"+player.atk,20,60);
+  ctx.fillText("ENEMY:"+enemies.length,20,80); // 残敵数表示
 
   // スタミナバー（背景グレー＋残量イエロー）
   const barW = 100;
   const barH = 8;
   const barX = 20;
-  const barY = 68;
+  const barY = 88; // ENEMY行追加により68→88に調整
   ctx.fillStyle = "#444";
   ctx.fillRect(barX, barY, barW, barH);
   ctx.fillStyle = "#ff0";
   ctx.fillRect(barX, barY, barW * (player.stamina / player.maxStamina), barH);
+
+  // saveFlash 中は "SAVED" を黄色で表示
+  if(saveFlash > 0){
+    ctx.fillStyle = "#ff0";
+    ctx.fillText("SAVED", 20, barY + barH + 20);
+  }
+
+  // hutFlash 中はメッセージ（EXPANDED / NO WOOD）をオレンジで表示
+  if(hutFlash > 0){
+    ctx.fillStyle = "#f80";
+    ctx.fillText(hutFlashMsg, 20, barY + barH + 40);
+  }
+
+  // 小屋内フラグ表示（判定境界の視認性確保）
+  if(player.inHut){
+    ctx.fillStyle = "#0ff";
+    ctx.fillText("[HUT]", 20, barY + barH + 60);
+  }
 }
 
 // =====================
@@ -597,6 +628,7 @@ function drawTitle(){
   ctx.fillStyle="#000";
   ctx.fillRect(0,0,canvas.width,canvas.height);
 
+  ctx.font="20px monospace"; // drawMap の font 設定に依存しないよう明示指定
   ctx.fillStyle="white";
   ctx.fillText("FOREST SURVIVAL",50,100);
   ctx.fillText("N:NEW",50,140);

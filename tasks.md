@@ -55,14 +55,14 @@
 - [ ] **タイトル画面にキー操作ヒントを表示**（`drawTitle` に移動/攻撃/回避のキー3行追加）｜初見プレイヤーが操作不明で詰まる
 - [ ] **HP上限を `player.maxHp` で管理**（`player` 定義に `maxHp:100` を追加し `100` ハードコードを除去）｜将来のHP拡張時に破綻防止
 - [ ] **HUDのHP表示を `Math.floor` で統一**（`drawUI` の `Math.floor(player.hp)` はあるが小屋回復中に小数が出る箇所を統一）｜表示崩れ防止
-- [ ] **HUDに残敵数を表示**（`drawUI` に `"ENEMY:"+enemies.length` の1行追加）｜状況把握困難
-- [ ] **saveGame 成功時に "SAVED" をHUD数フレーム表示**（`saveFlash` カウンタを追加し `drawUI` で描画・`saveGame()` 呼出時にセット）｜保存確認不能
-- [ ] **expandHut 実行後に "EXPANDED" をHUD数フレーム表示**（`saveFlash` と同パターンで `hutFlash` カウンタを追加）｜操作フィードバック皆無
-- [ ] **クラフト素材不足時にフラッシュ表示**（`craftHeal`/`craftWeapon` の素材不足分岐に `hutFlash` 流用で "NO WOOD" を数フレーム表示）｜無反応で混乱する
+- [x] **HUDに残敵数を表示**（`drawUI` に `"ENEMY:"+enemies.length` の1行追加）｜状況把握困難
+- [x] **saveGame 成功時に "SAVED" をHUD数フレーム表示**（`saveFlash` カウンタを追加し `drawUI` で描画・`saveGame()` 呼出時にセット）｜保存確認不能
+- [x] **expandHut 実行後に "EXPANDED" をHUD数フレーム表示**（`saveFlash` と同パターンで `hutFlash` カウンタを追加）｜操作フィードバック皆無
+- [x] **クラフト素材不足時にフラッシュ表示**（`craftHeal`/`craftWeapon` の素材不足分岐に `hutFlash` 流用で "NO WOOD" を数フレーム表示）｜無反応で混乱する
 - [ ] **`player.hp` 上限クランプを `update()` 末尾1箇所に集約**（現在 `player.hp=100` が `update` 内複数箇所に散在 → 末尾の1行に統一）｜多重上限バグ防止
-- [ ] **`settings` をセーブ対象に追加**（`saveGame` の JSON に `settings` を含め `loadGame` で復元）｜設定が保持されない
-- [ ] **HUDに小屋内表示 `[HUT]` を追加**（`drawUI` に `player.inHut` 条件で1行追加）｜判定境界が不明
-- [ ] **`drawTitle` に `ctx.font` を明示指定**（`drawMap` の `"20px monospace"` が引き継がれる前提になっているため独立して設定）｜タイトル文字崩れ
+- [x] **`settings` をセーブ対象に追加**（`saveGame` の JSON に `settings` を含め `loadGame` で復元）｜設定が保持されない
+- [x] **HUDに小屋内表示 `[HUT]` を追加**（`drawUI` に `player.inHut` 条件で1行追加）｜判定境界が不明
+- [x] **`drawTitle` に `ctx.font` を明示指定**（`drawMap` の `"20px monospace"` が引き継がれる前提になっているため独立して設定）｜タイトル文字崩れ
 
 ---
 
