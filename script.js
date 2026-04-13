@@ -536,7 +536,7 @@ function drawMap(){
   map.forEach((row,y)=>{
     row.forEach((v,x)=>{
       const sx=x*TILE_SIZE+world.offsetX;
-      const sy=y*TILE_SIZE+world.offsetY;
+      const sy=y*TILE_SIZE+world.offsetY+TILE_SIZE; // fillTextはベースライン基準→タイル上端に揃える
       ctx.fillStyle=v===1?"#888":v===2?"#0ff":"#0f0";
       ctx.fillText(v===1?"#":v===2?"H":".",sx,sy);
     });
@@ -544,22 +544,22 @@ function drawMap(){
 }
 
 function drawDeathDrops(){
-  ctx.fillStyle="#fa0"; // オレンジ色でアイテムドロップを視認しやすく
+  ctx.fillStyle="#fa0";
   deathDrops.forEach(d=>{
-    ctx.fillText("D", d.x + world.offsetX, d.y + world.offsetY);
+    ctx.fillText("D", d.x + world.offsetX, d.y + world.offsetY + TILE_SIZE);
   });
 }
 
 function drawEnemies(){
   ctx.fillStyle="red";
   enemies.forEach(e=>{
-    ctx.fillText("E",e.x+world.offsetX,e.y+world.offsetY);
+    ctx.fillText("E", e.x+world.offsetX, e.y+world.offsetY+TILE_SIZE);
   });
 }
 
 function drawPlayer(){
   ctx.fillStyle="cyan";
-  ctx.fillText("@",canvas.width/2,canvas.height/2);
+  ctx.fillText("@", canvas.width/2, canvas.height/2+TILE_SIZE);
 }
 
 function drawUI(){
