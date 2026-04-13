@@ -17,6 +17,17 @@
 
 ## ■ クリティカル
 
+### ~~🔴 スタート位置がマップ外（壁）になる~~ ✅ 解決済み
+- 症状：`world.offsetX/Y=0` のためプレイヤー実座標がcanvasサイズ依存でマップ範囲外になる
+- 対応：`world.offsetX/Y` をタイル(1,1)中央に来るよう `canvas.width/2 - TILE_SIZE*1.5` で初期化
+
+### ~~🔴 攻撃キーを押しても attack() が実行されない~~ ✅ 解決済み
+- 症状：Space キーで `input.attack=true` になるが `attack()` はどこからも呼ばれていなかった
+- 対応：Space `keydown` 時に `attack()` を即時呼び出すよう修正
+
+### ~~🔴 回避に無敵・SE・スタミナ消費が未実装~~ ✅ 解決済み
+- 対応：ShiftLeft keydown にスタミナ消費・`player.invincible=30`・`playSE("dodge")` を追加。`update()` に無敵カウントダウン、`updateEnemies()` に `invincible===0` ガードを追加
+
 ### 🔴 仮想パッドが機能しない
 - 症状：スマホで操作できない
 - 原因：`script.js` にタッチイベントのバインドが存在しない
@@ -56,14 +67,20 @@
 - 対象：`script.js` の `updateBullets()`
 - 補足：`balance.md` に弾ダメージ5と記載があるが処理なし
 
-### ~~🟡 壁を通り抜けられる~~ ✅ 解決済み
-- 対応：`move()` 内でX軸・Y軸それぞれの移動後座標を `isWall()` で事前チェックし、壁の場合はoffset更新をスキップ
+### 🟡 壁を通り抜けられる
+- 症状：壁タイルに侵入できる
+- 原因：`isWall()` は定義済みだが `move()` 内で呼ばれていない
+- 対象：`script.js` の `move()`
 
-### ~~🟡 回避に無敵フレームがない~~ ✅ 解決済み
-- 対応：ShiftLeft keydown で `player.invincible=30` をセット。`update()` 内でカウントダウン。`updateEnemies()` の接触ダメージに `player.invincible===0` ガードを追加
+### 🟡 回避に無敵フレームがない
+- 症状：回避中もダメージを受ける
+- 原因：`player.invincible` は定義されているが、dodge 処理内で値を設定していない。また `updateEnemies()` で無敵チェックをしていない
+- 対象：`script.js` の dodge 処理・`updateEnemies()`
 
-### ~~🟡 deathDrop を回収できない~~ ✅ 解決済み
-- 対応：`update()` 内に距離30px以内の接触でwood回収＋deathDrops除去処理を追加。`drawEnemies()` 内に黄色 `D` 記号での描画を追加
+### 🟡 deathDrop を回収できない
+- 症状：死亡地点のアイテムが拾えない
+- 原因：`deathDrops` の生成処理は存在するが、プレイヤーとの接触判定・回収処理が未実装
+- 対象：`script.js`（回収処理の追加）
 
 ---
 

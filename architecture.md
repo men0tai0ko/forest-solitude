@@ -52,6 +52,7 @@ requestAnimationFrame → loop()
 ### world
 ```js
 { offsetX, offsetY }   // プレイヤー中央固定のためのワールドオフセット
+// 初期値：canvas.width/2 - TILE_SIZE*1.5 でタイル(1,1)中央にスタート
 ```
 
 ### map

@@ -54,11 +54,14 @@ document.addEventListener("keydown", e => {
   if (e.key === "ArrowLeft") input.left = true;
   if (e.key === "ArrowRight") input.right = true;
 
-  if (e.code === "Space") input.attack = true;
-  if (e.code === "ShiftLeft"){
-    input.dodge=true;
-    player.invincible=30; // 回避時に無敵フレーム付与（30frame）
-    playSE("dodge");
+  if (e.code === "Space"){ input.attack = true; attack(); } // 攻撃を即時実行
+  if (e.code === "ShiftLeft"){                          // 回避：スタミナ足りる場合のみ有効
+    if(player.stamina >= STAMINA_DODGE_COST){
+      player.stamina  -= STAMINA_DODGE_COST;            // スタミナ消費
+      player.invincible = 30;                           // 無敵フレーム付与（30f）
+      input.dodge = true;
+      playSE("dodge");                                  // 回避SE再生
+    }
   }
 
   if (e.key.toLowerCase() === "z") useHeal();
@@ -120,7 +123,13 @@ const player={
 // =====================
 // ■ World
 // =====================
-const world={ offsetX:0, offsetY:0 };
+// プレイヤー実座標 = canvas.width/2 - offsetX
+// タイル(1,1)中央 = TILE_SIZE*1 + TILE_SIZE/2 = 60px に配置
+// → offsetX = canvas.width/2 - 60
+const world={
+  offsetX: canvas.width/2  - (TILE_SIZE*1 + TILE_SIZE/2),
+  offsetY: canvas.height/2 - (TILE_SIZE*1 + TILE_SIZE/2)
+};
 
 // =====================
 // ■ Enemy
@@ -218,20 +227,9 @@ function update(){
     player.hp+=0.5;
   }
 
-  // deathDrops 回収判定：プレイヤー実座標と距離30px以内で自動回収
-  const cpx=canvas.width/2-world.offsetX;
-  const cpy=canvas.height/2-world.offsetY;
-  deathDrops=deathDrops.filter(d=>{
-    if(Math.hypot(d.x-cpx,d.y-cpy)<30){
-      inventory.wood+=d.items.wood||0; // ロスト分のwoodを回収
-      return false;
-    }
-    return true;
-  });
-
   if(player.hp>100) player.hp=100;
 
-  if(player.invincible>0) player.invincible--; // 無敵フレームカウントダウン
+  if(player.invincible>0) player.invincible--;  // 無敵フレームカウントダウン
 
   if(shake>0) shake--;
 }
@@ -251,21 +249,13 @@ function move(){
 
   const speed=3;
 
-  // 移動後のプレイヤー実座標を軸ごとに壁判定し、壁なら移動を取り消す
-  const nextOffsetX=world.offsetX-(vx*speed-player.knockbackX);
-  const nextOffsetY=world.offsetY-(vy*speed-player.knockbackY);
-  const px=canvas.width/2-nextOffsetX;
-  const py=canvas.height/2-world.offsetY;   // X移動後のY座標は現在値で確認
-  const px2=canvas.width/2-world.offsetX;   // Y移動後のX座標は現在値で確認
-  const py2=canvas.height/2-nextOffsetY;
+  world.offsetX-=vx*speed-player.knockbackX;
+  world.offsetY-=vy*speed-player.knockbackY;
 
-  if(!isWall(px,py))  world.offsetX=nextOffsetX; // X軸：壁でなければ適用
-  if(!isWall(px2,py2)) world.offsetY=nextOffsetY; // Y軸：壁でなければ適用
+  const px=canvas.width/2-world.offsetX;
+  const py=canvas.height/2-world.offsetY;
 
-  const cpx=canvas.width/2-world.offsetX;
-  const cpy=canvas.height/2-world.offsetY;
-
-  player.inHut=isHut(cpx,cpy);
+  player.inHut=isHut(px,py);
 
   player.knockbackX*=0.8;
   player.knockbackY*=0.8;
@@ -308,7 +298,7 @@ function updateEnemies(){
       }
     }
 
-    if(dist<30 && player.invincible===0){ // 無敵中はダメージ無効
+    if(dist<30 && player.invincible===0){  // 無敵中はダメージ無効
       player.hp-=1;
       shake=10;
       playSE("hit");
@@ -413,11 +403,6 @@ function drawEnemies(){
   ctx.fillStyle="red";
   enemies.forEach(e=>{
     ctx.fillText("E",e.x+world.offsetX,e.y+world.offsetY);
-  });
-  // deathDrops をマップ上に D 記号で描画
-  ctx.fillStyle="yellow";
-  deathDrops.forEach(d=>{
-    ctx.fillText("D",d.x+world.offsetX,d.y+world.offsetY);
   });
 }
 
