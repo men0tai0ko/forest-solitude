@@ -298,6 +298,10 @@ function loadGame(){
   Object.assign(world,d.world);
   Object.assign(inventory,d.inventory);
   if(d.settings) Object.assign(settings,d.settings); // settings を復元（旧セーブ互換：存在チェックあり）
+  // ロード後のスポーン位置を現在のcanvasサイズで再計算（ブラウザサイズ差異を解消）
+  const spawn = calcSpawnOffset();
+  world.offsetX = spawn.offsetX;
+  world.offsetY = spawn.offsetY;
   // 前セッションの残存データをリセット
   enemies=[]; bullets=[]; deathDrops=[];
 }

@@ -151,6 +151,7 @@ Forest Survival
 - 手動セーブ：S キー
 - セーブ対象：`player` / `world` / `inventory` / `map`
 - ロード：タイトル画面で L キー
+- ロード後のスポーン位置：常に小屋内（`calcSpawnOffset()` で現在のcanvasサイズに合わせ再計算）
 
 > `spec.md` 旧版には「自動セーブ」と記載があったが、`script.js` に自動セーブ処理は存在しない。**要確認・要修正。**
 
