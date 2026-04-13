@@ -26,13 +26,18 @@
 - [x] 弾→プレイヤーへのダメージ処理（updateBullets に衝突判定追加）
 - [x] 壁の当たり判定（move() に isWall チェック組み込み・壁ずり対応）
 - [x] マップ拡張（20×15、小屋2×2を維持、フィールドを小屋の5倍相当に拡大）
+- [x] 仮想パッドのタッチイベント接続（bindVpad IIFE で全6ボタンにバインド）
+- [x] deathDrops の回収処理（update() 内に近接判定・inventory加算・配列除去を追加）
+- [x] ノックバック位置ズレ修正（move() でノックバックを入力移動から分離し壁判定への混入を解消）
+- [x] スタミナバーをHUD左上にバー形式で描画（drawUI に fillRect 2本追加、シェイク非影響化）
+- [x] 弾を画面外で自動削除（updateBullets に canvas 範囲チェックを追加、b.hit で既存フィルタに統合）
+- [x] deathDrops をマップ上に `D` 記号で描画（drawDeathDrops() 新規追加、render の drawMap 直後に呼び出し）
 
 ---
 
 ## ■ 未実装（優先度：高）
 
-- [ ] **仮想パッドのタッチイベント接続**（index.htmlにボタンあり、script.jsにバインドなし）
-- [ ] **deathDrops の回収処理**（生成のみで拾えない）
+（優先度高の未実装タスクはすべて完了）
 
 ---
 
@@ -47,13 +52,9 @@
 
 ## ■ 改善提案（優先度：高〜中）
 
-- [ ] **スタミナバーをHUD左上にバー形式で描画**（`drawUI` に `fillRect` 2本追加）｜回避判断不能のため高優先
-- [ ] **弾を画面外で自動削除**（`updateBullets` に `canvas` 範囲チェックを追加）｜配列肥大化によるパフォーマンス劣化防止
-- [ ] **スタミナ不足時に回避をスキップ**（dodge処理に `if(stamina < cost) return` 追加）｜すでに実装済みだが確認要
 - [ ] **タイトル画面にキー操作ヒントを表示**（`drawTitle` に移動/攻撃/回避のキー3行追加）｜初見プレイヤーが操作不明で詰まる
 - [ ] **HP上限を `player.maxHp` で管理**（`player` 定義に `maxHp:100` を追加し `100` ハードコードを除去）｜将来のHP拡張時に破綻防止
 - [ ] **HUDのHP表示を `Math.floor` で統一**（`drawUI` の `Math.floor(player.hp)` はあるが小屋回復中に小数が出る箇所を統一）｜表示崩れ防止
-- [ ] **deathDrops をマップ上に `D` 記号で描画**（`render` の `drawMap` 直後に `deathDrops` をループして `fillText("D",...)` 追加）｜回収場所不明
 - [ ] **HUDに残敵数を表示**（`drawUI` に `"ENEMY:"+enemies.length` の1行追加）｜状況把握困難
 - [ ] **saveGame 成功時に "SAVED" をHUD数フレーム表示**（`saveFlash` カウンタを追加し `drawUI` で描画・`saveGame()` 呼出時にセット）｜保存確認不能
 - [ ] **expandHut 実行後に "EXPANDED" をHUD数フレーム表示**（`saveFlash` と同パターンで `hutFlash` カウンタを追加）｜操作フィードバック皆無

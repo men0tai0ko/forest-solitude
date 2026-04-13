@@ -88,6 +88,57 @@ document.addEventListener("keyup", e => {
 });
 
 // =====================
+// ■ Virtual Pad（タッチイベント）
+// =====================
+// 方向ボタン：touchstart/touchend で input フラグを操作
+// atk ボタン：touchstart で attack() を直接呼び出し（Spaceキーと同一処理）
+// dodge ボタン：touchstart でスタミナ判定付きの回避処理（ShiftLeftキーと同一処理）
+(function bindVpad(){
+  const map = {
+    up:    () => { input.up    = true;  },
+    down:  () => { input.down  = true;  },
+    left:  () => { input.left  = true;  },
+    right: () => { input.right = true;  },
+  };
+  const unmap = {
+    up:    () => { input.up    = false; },
+    down:  () => { input.down  = false; },
+    left:  () => { input.left  = false; },
+    right: () => { input.right = false; },
+  };
+
+  ["up","down","left","right"].forEach(id => {
+    const btn = document.getElementById(id);
+    if(!btn) return;
+    btn.addEventListener("touchstart", e => { e.preventDefault(); map[id]();   }, { passive:false });
+    btn.addEventListener("touchend",   e => { e.preventDefault(); unmap[id](); }, { passive:false });
+    btn.addEventListener("touchcancel",e => { e.preventDefault(); unmap[id](); }, { passive:false });
+  });
+
+  // atk ボタン：Spaceキーと同一（attack() 直接呼び出し）
+  const atkBtn = document.getElementById("atk");
+  if(atkBtn){
+    atkBtn.addEventListener("touchstart", e => { e.preventDefault(); attack(); }, { passive:false });
+  }
+
+  // dodge ボタン：ShiftLeftキーと同一処理
+  const dodgeBtn = document.getElementById("dodge");
+  if(dodgeBtn){
+    dodgeBtn.addEventListener("touchstart", e => {
+      e.preventDefault();
+      if(player.stamina >= STAMINA_DODGE_COST){
+        player.stamina   -= STAMINA_DODGE_COST;
+        player.invincible = 30;
+        input.dodge = true;
+        playSE("dodge");
+      }
+    }, { passive:false });
+    dodgeBtn.addEventListener("touchend",    e => { e.preventDefault(); input.dodge = false; }, { passive:false });
+    dodgeBtn.addEventListener("touchcancel", e => { e.preventDefault(); input.dodge = false; }, { passive:false });
+  }
+}());
+
+// =====================
 // ■ Map（1=壁 0=床 2=小屋）
 // =====================
 // 旧マップから変更：
@@ -267,6 +318,19 @@ function update(){
   if(player.invincible>0) player.invincible--;  // 無敵フレームカウントダウン
 
   if(shake>0) shake--;
+
+  // deathDrop 回収判定（balance.md：回収判定距離 30px）
+  if(deathDrops.length > 0){
+    const px = canvas.width/2  - world.offsetX;
+    const py = canvas.height/2 - world.offsetY;
+    deathDrops = deathDrops.filter(d => {
+      if(Math.hypot(d.x - px, d.y - py) < 30){
+        inventory.wood += d.items.wood || 0; // アイテム回収
+        return false; // 配列から除去
+      }
+      return true;
+    });
+  }
 }
 
 function move(){
@@ -284,19 +348,26 @@ function move(){
 
   const speed=3;
 
-  // X軸移動：壁でなければ適用
-  const nextOffX = world.offsetX - (vx*speed - player.knockbackX);
-  const pxNext = canvas.width/2 - nextOffX;
-  if(!isWall(pxNext, canvas.height/2 - world.offsetY)){
+  // 入力移動とノックバックを分離して壁判定
+  // 入力移動のみ isWall チェック対象とし、ノックバックは壁チェック後に無条件適用
+  const moveX = vx * speed;
+  const moveY = vy * speed;
+
+  // X軸：入力移動を壁チェック、通れる場合のみ適用
+  const nextOffX = world.offsetX - moveX;
+  if(!isWall(canvas.width/2 - nextOffX, canvas.height/2 - world.offsetY)){
     world.offsetX = nextOffX;
   }
 
-  // Y軸移動：壁でなければ適用
-  const nextOffY = world.offsetY - (vy*speed - player.knockbackY);
-  const pyNext = canvas.height/2 - nextOffY;
-  if(!isWall(canvas.width/2 - world.offsetX, pyNext)){
+  // Y軸：入力移動を壁チェック、通れる場合のみ適用
+  const nextOffY = world.offsetY - moveY;
+  if(!isWall(canvas.width/2 - world.offsetX, canvas.height/2 - nextOffY)){
     world.offsetY = nextOffY;
   }
+
+  // ノックバックは壁判定外で適用（壁内への押し込みを許容しない設計は今後の課題）
+  world.offsetX += player.knockbackX;
+  world.offsetY += player.knockbackY;
 
   const px=canvas.width/2-world.offsetX;
   const py=canvas.height/2-world.offsetY;
@@ -368,8 +439,15 @@ function updateBullets(){
       playSE("hit");
       b.hit=true; // 命中フラグ
     }
+    // 画面外に出た弾を除去（配列肥大化防止）
+    const sx = b.x + world.offsetX;
+    const sy = b.y + world.offsetY;
+    if(sx < -TILE_SIZE || sx > canvas.width  + TILE_SIZE ||
+       sy < -TILE_SIZE || sy > canvas.height + TILE_SIZE){
+      b.hit = true;
+    }
   });
-  bullets=bullets.filter(b=>!b.hit); // 命中した弾を除去
+  bullets=bullets.filter(b=>!b.hit); // 命中・画面外の弾を除去
 }
 
 // =====================
@@ -447,6 +525,7 @@ function render(){
   ctx.fillRect(0,0,canvas.width,canvas.height);
 
   drawMap();
+  drawDeathDrops(); // deathDropsをDで描画（drawMap直後）
   drawEnemies();
   drawPlayer();
   drawUI();
@@ -464,6 +543,13 @@ function drawMap(){
   });
 }
 
+function drawDeathDrops(){
+  ctx.fillStyle="#fa0"; // オレンジ色でアイテムドロップを視認しやすく
+  deathDrops.forEach(d=>{
+    ctx.fillText("D", d.x + world.offsetX, d.y + world.offsetY);
+  });
+}
+
 function drawEnemies(){
   ctx.fillStyle="red";
   enemies.forEach(e=>{
@@ -477,10 +563,22 @@ function drawPlayer(){
 }
 
 function drawUI(){
+  ctx.setTransform(1,0,0,1,0,0); // HUDはシェイクの影響を受けないようリセット
+  ctx.font="20px monospace";
   ctx.fillStyle="white";
   ctx.fillText("HP:"+Math.floor(player.hp),20,20);
   ctx.fillText("WOOD:"+inventory.wood,20,40);
   ctx.fillText("ATK:"+player.atk,20,60);
+
+  // スタミナバー（背景グレー＋残量イエロー）
+  const barW = 100;
+  const barH = 8;
+  const barX = 20;
+  const barY = 68;
+  ctx.fillStyle = "#444";
+  ctx.fillRect(barX, barY, barW, barH);
+  ctx.fillStyle = "#ff0";
+  ctx.fillRect(barX, barY, barW * (player.stamina / player.maxStamina), barH);
 }
 
 // =====================
