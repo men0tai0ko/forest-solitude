@@ -79,7 +79,7 @@
 
 ### ~~🟢 ブラウザリサイズ時にプレイヤーのマップ上位置がずれる~~ ✅ 解決済み
 - 症状：ウィンドウサイズ変更時に `canvas.width/height` が変わり、同じ `world.offsetX/Y` でも実座標 `canvas.width/2 - offsetX` が変化してプレイヤー位置がずれる
-- 対応：`resize()` 内でリサイズ前後の `canvas` サイズ差分の半分を `world.offsetX/Y` に加算して実座標を維持。初回呼び出し時（`prevW=0`）は `if(prevW && prevH)` でスキップ
+- 対応：`resize()` 内でリサイズ前後の `canvas` サイズ差分の半分を `world.offsetX/Y` に加算して実座標を維持。`typeof world !== "undefined"` チェックで初回呼び出し時（`world` 未定義）のReferenceErrorを回避
 
 ### ~~🟢 stamina が maxStamina を超えてオーバーフローする~~ ✅ 解決済み
 - 症状：`stamina += STAMINA_RECOVER` の浮動小数点誤差により `maxStamina(100)` を超える値が蓄積される

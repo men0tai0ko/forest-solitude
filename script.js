@@ -11,7 +11,8 @@ function resize() {
   canvas.height = window.innerHeight;
   // リサイズ前後のcanvasサイズ差分をoffsetに補正（プレイヤー実座標を維持）
   // 実座標 = canvas.width/2 - offsetX なので、幅が変わった分だけoffsetを調整する
-  if(prevW && prevH){
+  // typeof チェックで world 定義前（初回呼び出し時）のReferenceErrorを回避
+  if(typeof world !== "undefined"){
     world.offsetX += (canvas.width  - prevW) / 2;
     world.offsetY += (canvas.height - prevH) / 2;
   }
