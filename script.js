@@ -187,6 +187,15 @@ function loadGame(){
   Object.assign(player,d.player);
   Object.assign(world,d.world);
   Object.assign(inventory,d.inventory);
+  // ロード時に前セッションの戦闘状態をリセット
+  enemies=[
+    {x:120,y:80,hp:30,type:"slime"},
+    {x:200,y:100,hp:40,type:"charger"},
+    {x:180,y:60,hp:20,type:"shooter"},
+    {x:300,y:120,hp:200,type:"boss"}
+  ];
+  bullets=[];
+  deathDrops=[];
 }
 
 function checkSave(){
@@ -302,6 +311,8 @@ function updateBullets(){
 // ■ Death
 // =====================
 function handleDeath(){
+  player.hp=1; // 多重呼び出し防止：即座にhpを正値にしてガード
+
   const px=canvas.width/2-world.offsetX;
   const py=canvas.height/2-world.offsetY;
 
@@ -436,3 +447,27 @@ loop();
 document.addEventListener("click",()=>{
   initAudio();
 },{once:true});
+
+// =====================
+// ■ Virtual Pad（タッチイベント接続）
+// =====================
+function bindPad(id, key){
+  const el=document.getElementById(id);
+  if(!el)return;
+  // touchstart でフラグON・音声初期化
+  el.addEventListener("touchstart",e=>{
+    e.preventDefault();
+    initAudio();
+    input[key]=true;
+  },{passive:false});
+  // touchend / touchcancel でフラグOFF
+  el.addEventListener("touchend",  e=>{ e.preventDefault(); input[key]=false; },{passive:false});
+  el.addEventListener("touchcancel",e=>{ e.preventDefault(); input[key]=false; },{passive:false});
+}
+
+bindPad("up",    "up");
+bindPad("down",  "down");
+bindPad("left",  "left");
+bindPad("right", "right");
+bindPad("atk",   "attack");
+bindPad("dodge", "dodge");

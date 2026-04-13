@@ -91,6 +91,7 @@ Forest Survival
 
 ### ● 機能
 - 安全地帯（敵はプレイヤーが小屋内の間は移動・攻撃しない）
+- ※ 要確認：`updateEnemies()` の `if(player.inHut)return` 位置により、shooter の弾発射が小屋内でも実行される可能性あり（コードの分岐順次第）
 - 自動HP回復：0.2 / frame
 - クラフト実行
 - 小屋拡張
